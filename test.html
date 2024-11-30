@@ -248,7 +248,13 @@
 
     return `vmess://${base64EncodedData}`;
 }
-        function handleGenerateVmessButtonClick() {
+        function handleGenerateVmessButtonClick() 
+        var dialog = document.querySelector('.dialog');
+        var url = document.getElementById('url');
+        var shortStr = document.getElementById('shortStr');
+        var submit = document.getElementById('submit');
+            var vmess = document.getElementById('generateVmessButton');
+        vmess.onclick =function(){
     const shadowsocksInput = document.getElementById('url');
     const vmessResult = document.getElementById('shortStr');
 
@@ -260,10 +266,6 @@
         vmessResult.vmessResult = `生成失败`;
     }
 }
-        var dialog = document.querySelector('.dialog');
-        var url = document.getElementById('url');
-        var shortStr = document.getElementById('shortStr');
-        var submit = document.getElementById('submit');
         submit.onclick = function () {
             if (url.value == '') {
                 alert('请输入长链接');
