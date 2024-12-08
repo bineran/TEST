@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SS API</title>
+    <script>
+        async function getSSData() {
+            try {
+                let list = [];
+                let yxipResult = await fetchData();
+                if (yxipResult && yxipResult.code === 0) {
+                    for (let n of yxipResult.data) {
+                        n.title = encodeURIComponent(n.title + n.area);
+                        let ss_url = btoa(`aes-256-cfb:${n.password}@${n.ip}:${n.port}`);
+                        list.push(`ss://${ss_url}#${n.title}`);
+                    }
+                }
+                document.body.innerText = list.join("\n");
+            } catch (e) {
+                document.body.innerText = "";
+            }
+        }
+
+        async function fetchData() {
+            try {
+                let response = await fetch('http://api.skrapp.net/api/serverlist', {
+                    method: 'POST',
+                    headers: {
+                        'Accept-Language': 'zh-Hans-CN;q=1, en-CN;q=0.9',
+                        'AppVersion': '1.3.1',
+                        'User-Agent': 'SkrKK/1.3.1 (iPhone; iOS 13.5; Scale/2.00)',
+                        'Cookie': 'PHPSESSID=fnffo1ivhvt0ouo6ebqn86a0d4'
+                    },
+                    body: new URLSearchParams({
+                        'data': '4265a9c353cd8624fd2bc7b5d2f18b1b5e66ccd37e2dfa628bcb8f73db2f14ba98bc6a1d8d0d1c7ff1ef0823b11264d0addaba2bd6a30bdefe06f4ba994ed'
+                    })
+                });
+
+                if (response.ok) {
+                    let encryptedText = await response.text();
+                    let encryptedData = encryptedText.match(/.{1,2}/g).filter((_, i) => i % 2 === 0).map(byte => parseInt(byte, 16));
+                    
+                    let key = '65151f8d966bf596';
+                    let iv = '88ca0f0ea1ecf975';
+
+                    let decryptedData = decryptData(encryptedData, key, iv);
+                    let result = new TextDecoder('utf-8').decode(decryptedData);
+                    return JSON.parse(result);
+                }
+                return null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function decryptData(encryptedData, key, iv) {
+            let decipher = CryptoJS.AES.decrypt({
+                ciphertext: CryptoJS.enc.Hex.parse(encryptedData.map(b => b.toString(16).padStart(2, '0')).join(''))
+            }, CryptoJS.enc.Utf8.parse(key), {
+                iv: CryptoJS.enc.Utf8.parse(iv),
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.NoPadding
+            });
+
+            let decryptedStr = decipher.toString(CryptoJS.enc.Utf8);
+            let paddingLength = parseInt(decryptedStr.charAt(decryptedStr.length - 1));
+            return new TextEncoder().encode(decryptedStr.slice(0, -paddingLength));
+        }
+    </script>
+</head>
+<body onload="getSSData()">
+    <!-- The result will be displayed here -->
+</body>
+</html>
